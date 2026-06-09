@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #0b1220;
+  color: #e2e8f0;
+}
+
+@layer components {
+  .card {
+    @apply bg-slate-900/60 border border-slate-800 rounded-xl shadow-lg backdrop-blur;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-medium transition;
+  }
+  .btn-primary {
+    @apply btn bg-brand hover:bg-brand-dark text-white;
+  }
+  .btn-ghost {
+    @apply btn bg-slate-800 hover:bg-slate-700 text-slate-100;
+  }
+}
