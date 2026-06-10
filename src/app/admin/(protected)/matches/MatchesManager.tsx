@@ -152,13 +152,15 @@ function MatchRow({
   }
   useEffect(() => { if (showGoals) loadGoals(); }, [showGoals]);
 
-  async function save() {
+  async function save(forceStatus?: MatchStatus) {
     setBusy(true);
+    const newStatus = forceStatus ?? status;
     const { error } = await supabase.from("matches").update({
-      home_score: home, away_score: away, status
+      home_score: home, away_score: away, status: newStatus
     }).eq("id", match.id);
     setBusy(false);
     if (error) return alert(error.message);
+    if (forceStatus) setStatus(forceStatus);
     onSaved();
   }
 
@@ -215,9 +217,14 @@ function MatchRow({
           <option value="finished">Finalizado</option>
           <option value="walkover">Walkover</option>
         </select>
-        <button onClick={save} disabled={busy || !playable} className="btn-primary">
+        <button onClick={() => save()} disabled={busy || !playable} className="btn-ghost">
           <Save size={14} /> Guardar
         </button>
+        {playable && status !== "finished" && (
+          <button onClick={() => save("finished")} disabled={busy} className="btn-primary" title="Marca el partido como finalizado y suma los puntos a la tabla">
+            ✅ Finalizar
+          </button>
+        )}
         {playable && (
           <button onClick={() => setShowGoals(s => !s)} className="btn-ghost">
             ⚽ Goles
