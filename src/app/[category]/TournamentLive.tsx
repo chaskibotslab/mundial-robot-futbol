@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import GroupTable from "@/components/GroupTable";
 import BracketView from "@/components/BracketView";
+import BracketTV from "@/components/BracketTV";
 import type { Country, Match, Standing, TournamentFormat } from "@/lib/types";
 
 interface Props {
@@ -18,6 +19,7 @@ export default function TournamentLive({ tournamentId, name, status, format }: P
   const [matches, setMatches] = useState<Match[]>([]);
   const [countries, setCountries] = useState<Record<string, Country>>({});
   const [tab, setTab] = useState<"groups" | "bracket">(status === "knockout" || status === "finished" ? "bracket" : "groups");
+  const [bracketMode, setBracketMode] = useState<"tv" | "list">("tv");
 
   const refresh = useCallback(async () => {
     const [{ data: st }, { data: ms }, { data: cs }] = await Promise.all([
@@ -68,7 +70,15 @@ export default function TournamentLive({ tournamentId, name, status, format }: P
       {tab === "groups" ? (
         <GroupTable standings={standings} matches={matches.filter(m => m.stage === "group")} />
       ) : (
-        <BracketView matches={matches.filter(m => m.stage !== "group")} countries={countries} />
+        <div className="space-y-3">
+          <div className="flex justify-end gap-2 text-xs">
+            <button onClick={() => setBracketMode("tv")} className={bracketMode === "tv" ? "btn-primary text-xs px-3 py-1" : "btn-ghost text-xs px-3 py-1"}>Vista Mundial</button>
+            <button onClick={() => setBracketMode("list")} className={bracketMode === "list" ? "btn-primary text-xs px-3 py-1" : "btn-ghost text-xs px-3 py-1"}>Vista Lista</button>
+          </div>
+          {bracketMode === "tv"
+            ? <BracketTV matches={matches.filter(m => m.stage !== "group")} countries={countries} />
+            : <BracketView matches={matches.filter(m => m.stage !== "group")} countries={countries} />}
+        </div>
       )}
     </div>
   );

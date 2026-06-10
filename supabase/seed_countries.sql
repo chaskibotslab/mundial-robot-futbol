@@ -1,52 +1,68 @@
--- Seed: paises clasificados al Mundial 2022 (32) + extras frecuentes.
--- Puedes adaptar la lista al formato 48 (2026) si lo deseas.
-insert into countries (name, fifa_code, flag_url) values
-  ('Argentina','ARG','https://flagcdn.com/w160/ar.png'),
-  ('Brasil','BRA','https://flagcdn.com/w160/br.png'),
-  ('Francia','FRA','https://flagcdn.com/w160/fr.png'),
-  ('Alemania','GER','https://flagcdn.com/w160/de.png'),
-  ('España','ESP','https://flagcdn.com/w160/es.png'),
-  ('Inglaterra','ENG','https://flagcdn.com/w160/gb-eng.png'),
-  ('Portugal','POR','https://flagcdn.com/w160/pt.png'),
-  ('Países Bajos','NED','https://flagcdn.com/w160/nl.png'),
-  ('Bélgica','BEL','https://flagcdn.com/w160/be.png'),
-  ('Italia','ITA','https://flagcdn.com/w160/it.png'),
-  ('Croacia','CRO','https://flagcdn.com/w160/hr.png'),
-  ('Uruguay','URU','https://flagcdn.com/w160/uy.png'),
-  ('Colombia','COL','https://flagcdn.com/w160/co.png'),
-  ('México','MEX','https://flagcdn.com/w160/mx.png'),
-  ('Estados Unidos','USA','https://flagcdn.com/w160/us.png'),
-  ('Canadá','CAN','https://flagcdn.com/w160/ca.png'),
-  ('Japón','JPN','https://flagcdn.com/w160/jp.png'),
-  ('Corea del Sur','KOR','https://flagcdn.com/w160/kr.png'),
-  ('Australia','AUS','https://flagcdn.com/w160/au.png'),
-  ('Marruecos','MAR','https://flagcdn.com/w160/ma.png'),
-  ('Senegal','SEN','https://flagcdn.com/w160/sn.png'),
-  ('Ghana','GHA','https://flagcdn.com/w160/gh.png'),
-  ('Camerún','CMR','https://flagcdn.com/w160/cm.png'),
-  ('Túnez','TUN','https://flagcdn.com/w160/tn.png'),
-  ('Polonia','POL','https://flagcdn.com/w160/pl.png'),
-  ('Suiza','SUI','https://flagcdn.com/w160/ch.png'),
-  ('Serbia','SRB','https://flagcdn.com/w160/rs.png'),
-  ('Dinamarca','DEN','https://flagcdn.com/w160/dk.png'),
-  ('Gales','WAL','https://flagcdn.com/w160/gb-wls.png'),
-  ('Ecuador','ECU','https://flagcdn.com/w160/ec.png'),
-  ('Arabia Saudita','KSA','https://flagcdn.com/w160/sa.png'),
-  ('Catar','QAT','https://flagcdn.com/w160/qa.png'),
-  ('Irán','IRN','https://flagcdn.com/w160/ir.png'),
-  ('Costa Rica','CRC','https://flagcdn.com/w160/cr.png'),
-  ('Perú','PER','https://flagcdn.com/w160/pe.png'),
-  ('Chile','CHI','https://flagcdn.com/w160/cl.png'),
-  ('Paraguay','PAR','https://flagcdn.com/w160/py.png'),
-  ('Bolivia','BOL','https://flagcdn.com/w160/bo.png'),
-  ('Venezuela','VEN','https://flagcdn.com/w160/ve.png'),
-  ('Egipto','EGY','https://flagcdn.com/w160/eg.png'),
-  ('Argelia','ALG','https://flagcdn.com/w160/dz.png'),
-  ('Nigeria','NGA','https://flagcdn.com/w160/ng.png'),
-  ('Costa de Marfil','CIV','https://flagcdn.com/w160/ci.png'),
-  ('Sudáfrica','RSA','https://flagcdn.com/w160/za.png'),
-  ('Turquía','TUR','https://flagcdn.com/w160/tr.png'),
-  ('Suecia','SWE','https://flagcdn.com/w160/se.png'),
-  ('Noruega','NOR','https://flagcdn.com/w160/no.png'),
-  ('Austria','AUT','https://flagcdn.com/w160/at.png')
-on conflict (name) do nothing;
+-- Seed: selecciones clasificadas al Mundial FIFA 2026 (Canada, Mexico, EE.UU.)
+-- 43 directos + Irak (repechaje AFC) + 2 placeholders UEFA repesca = 46 + 2 TBD = 48.
+-- Limpia primero los paises antiguos:
+--   DELETE FROM countries;  -- cascadea a tournament_entries, group_slots, matches (country_id se queda NULL)
+-- Luego corre este insert.
+
+INSERT INTO countries (name, fifa_code, flag_url) VALUES
+  -- CONCACAF Anfitriones (3)
+  ('Canadá',            'CAN', 'https://flagcdn.com/w160/ca.png'),
+  ('Estados Unidos',    'USA', 'https://flagcdn.com/w160/us.png'),
+  ('México',            'MEX', 'https://flagcdn.com/w160/mx.png'),
+
+  -- CONMEBOL (6)
+  ('Argentina',         'ARG', 'https://flagcdn.com/w160/ar.png'),
+  ('Brasil',            'BRA', 'https://flagcdn.com/w160/br.png'),
+  ('Colombia',          'COL', 'https://flagcdn.com/w160/co.png'),
+  ('Ecuador',           'ECU', 'https://flagcdn.com/w160/ec.png'),
+  ('Paraguay',          'PAR', 'https://flagcdn.com/w160/py.png'),
+  ('Uruguay',           'URU', 'https://flagcdn.com/w160/uy.png'),
+
+  -- UEFA (16: 14 directos + Bosnia, Suecia)
+  ('Alemania',          'GER', 'https://flagcdn.com/w160/de.png'),
+  ('Austria',           'AUT', 'https://flagcdn.com/w160/at.png'),
+  ('Bélgica',           'BEL', 'https://flagcdn.com/w160/be.png'),
+  ('Bosnia y Herzegovina','BIH', 'https://flagcdn.com/w160/ba.png'),
+  ('Croacia',           'CRO', 'https://flagcdn.com/w160/hr.png'),
+  ('Escocia',           'SCO', 'https://flagcdn.com/w160/gb-sct.png'),
+  ('España',            'ESP', 'https://flagcdn.com/w160/es.png'),
+  ('Francia',           'FRA', 'https://flagcdn.com/w160/fr.png'),
+  ('Inglaterra',        'ENG', 'https://flagcdn.com/w160/gb-eng.png'),
+  ('Noruega',           'NOR', 'https://flagcdn.com/w160/no.png'),
+  ('Países Bajos',      'NED', 'https://flagcdn.com/w160/nl.png'),
+  ('Portugal',          'POR', 'https://flagcdn.com/w160/pt.png'),
+  ('Chequia',           'CZE', 'https://flagcdn.com/w160/cz.png'),
+  ('Suecia',            'SWE', 'https://flagcdn.com/w160/se.png'),
+  ('Suiza',             'SUI', 'https://flagcdn.com/w160/ch.png'),
+  ('Turquía',           'TUR', 'https://flagcdn.com/w160/tr.png'),
+
+  -- CONCACAF directos (3)
+  ('Curazao',           'CUW', 'https://flagcdn.com/w160/cw.png'),
+  ('Haití',             'HAI', 'https://flagcdn.com/w160/ht.png'),
+  ('Panamá',            'PAN', 'https://flagcdn.com/w160/pa.png'),
+
+  -- CAF (10: 9 + RD Congo)
+  ('Argelia',           'ALG', 'https://flagcdn.com/w160/dz.png'),
+  ('Cabo Verde',        'CPV', 'https://flagcdn.com/w160/cv.png'),
+  ('Costa de Marfil',   'CIV', 'https://flagcdn.com/w160/ci.png'),
+  ('Egipto',            'EGY', 'https://flagcdn.com/w160/eg.png'),
+  ('Ghana',             'GHA', 'https://flagcdn.com/w160/gh.png'),
+  ('Marruecos',         'MAR', 'https://flagcdn.com/w160/ma.png'),
+  ('RD Congo',          'COD', 'https://flagcdn.com/w160/cd.png'),
+  ('Senegal',           'SEN', 'https://flagcdn.com/w160/sn.png'),
+  ('Sudáfrica',         'RSA', 'https://flagcdn.com/w160/za.png'),
+  ('Túnez',             'TUN', 'https://flagcdn.com/w160/tn.png'),
+
+  -- AFC (8 directos + 1 repechaje Irak = 9)
+  ('Arabia Saudí',      'KSA', 'https://flagcdn.com/w160/sa.png'),
+  ('Australia',         'AUS', 'https://flagcdn.com/w160/au.png'),
+  ('Corea del Sur',     'KOR', 'https://flagcdn.com/w160/kr.png'),
+  ('Irán',              'IRN', 'https://flagcdn.com/w160/ir.png'),
+  ('Japón',             'JPN', 'https://flagcdn.com/w160/jp.png'),
+  ('Jordania',          'JOR', 'https://flagcdn.com/w160/jo.png'),
+  ('Qatar',             'QAT', 'https://flagcdn.com/w160/qa.png'),
+  ('Uzbekistán',        'UZB', 'https://flagcdn.com/w160/uz.png'),
+  ('Irak',              'IRQ', 'https://flagcdn.com/w160/iq.png'),
+
+  -- OFC (1)
+  ('Nueva Zelanda',     'NZL', 'https://flagcdn.com/w160/nz.png');

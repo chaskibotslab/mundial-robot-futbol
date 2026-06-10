@@ -1,5 +1,5 @@
 export type Category = "pro" | "amateur";
-export type TournamentFormat = "t16" | "t24" | "t32" | "t48";
+export type TournamentFormat = "t8" | "t12" | "t16" | "t24" | "t32" | "t48";
 export type TournamentStatus = "draft" | "groups" | "knockout" | "finished";
 export type MatchStage = "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final";
 export type MatchStatus = "scheduled" | "live" | "finished" | "walkover";
@@ -16,6 +16,16 @@ export interface Team {
   name: string;
   category: Category;
   logo_url: string | null;
+}
+
+/** Inscripcion de un team a un torneo, con (opcionalmente) un pais asignado.
+ *  Un team puede tener varias entries en el mismo torneo (multi-pais). */
+export interface TournamentEntry {
+  id: string;
+  tournament_id: string;
+  team_id: string;
+  country_id: string | null;
+  created_at: string;
 }
 
 export interface Tournament {
@@ -90,6 +100,8 @@ export const FORMAT_CONFIG: Record<TournamentFormat, {
   bestThirds: number;
   knockoutStart: MatchStage;
 }> = {
+  t8:  { teams: 8,  groups: 2, perGroup: 4, qualifyPerGroup: 2, bestThirds: 0, knockoutStart: "qf" },
+  t12: { teams: 12, groups: 4, perGroup: 3, qualifyPerGroup: 2, bestThirds: 0, knockoutStart: "qf" },
   t16: { teams: 16, groups: 4, perGroup: 4, qualifyPerGroup: 2, bestThirds: 0, knockoutStart: "qf" },
   t24: { teams: 24, groups: 6, perGroup: 4, qualifyPerGroup: 2, bestThirds: 4, knockoutStart: "r16" },
   t32: { teams: 32, groups: 8, perGroup: 4, qualifyPerGroup: 2, bestThirds: 0, knockoutStart: "r16" },

@@ -77,11 +77,16 @@ create table if not exists teams (
   unique (name, category)
 );
 
--- Un equipo puede representar 1..N paises
-create table if not exists team_countries (
-  team_id uuid references teams(id) on delete cascade,
-  country_id uuid references countries(id) on delete cascade,
-  primary key (team_id, country_id)
+-- Inscripcion de equipos a un torneo, con (opcionalmente) un pais asignado.
+-- Un team puede tener varias entries en el mismo torneo (multi-pais).
+-- Un pais solo puede pertenecer a 1 team por torneo.
+create table if not exists tournament_entries (
+  id            uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references tournaments(id) on delete cascade,
+  team_id       uuid not null references teams(id)       on delete cascade,
+  country_id    uuid references countries(id) on delete set null,
+  created_at    timestamptz not null default now(),
+  constraint uniq_country_per_tournament unique (tournament_id, country_id)
 );
 
 -- =============================================================
@@ -276,7 +281,7 @@ create trigger trg_propagate_match
 alter table profiles enable row level security;
 alter table countries enable row level security;
 alter table teams enable row level security;
-alter table team_countries enable row level security;
+alter table tournament_entries enable row level security;
 alter table tournaments enable row level security;
 alter table groups enable row level security;
 alter table group_slots enable row level security;
@@ -312,7 +317,7 @@ do $$ begin
   create policy "public read teams" on teams for select using (true);
 exception when duplicate_object then null; end $$;
 do $$ begin
-  create policy "public read team_countries" on team_countries for select using (true);
+  create policy "public read tournament_entries" on tournament_entries for select using (true);
 exception when duplicate_object then null; end $$;
 do $$ begin
   create policy "public read tournaments" on tournaments for select using (true);
@@ -340,7 +345,7 @@ do $$ begin
     using (is_admin()) with check (is_admin());
 exception when duplicate_object then null; end $$;
 do $$ begin
-  create policy "admin write team_countries" on team_countries for all
+  create policy "admin write tournament_entries" on tournament_entries for all
     using (is_admin()) with check (is_admin());
 exception when duplicate_object then null; end $$;
 do $$ begin

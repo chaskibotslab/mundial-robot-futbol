@@ -6,7 +6,10 @@ import { Trophy } from "lucide-react";
 export const metadata: Metadata = {
   title: "Mundial Robot Fútbol | Chaski Bots",
   description: "Simulación del Mundial de Robot Fútbol - Categorías Pro y Amateur",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000")
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  icons: {
+    icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2322c55e'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 010-5H6m12 1h1.5a2.5 2.5 0 010 5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22M18 2H6v7a6 6 0 0012 0V2z'/%3E%3C/svg%3E"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

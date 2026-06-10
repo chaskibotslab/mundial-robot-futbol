@@ -15,11 +15,14 @@ import { shuffle, groupLetter } from "./utils";
 export interface DrawInputCountry {
   countryId: string;
   pot?: 1 | 2 | 3 | 4; // bombo opcional. Si no se da, sortea aleatorio.
+  /** ID del equipo (robot) al que pertenece. Si dos paises del mismo equipo se sortean,
+   *  intentamos que NO caigan en el mismo grupo. */
+  teamId?: string | null;
 }
 
 export interface DrawnGroup {
   letter: string;
-  countries: string[]; // 4 ids en orden de bombo (1..4)
+  countries: string[]; // ids en orden de bombo
 }
 
 export function drawGroups(
@@ -33,30 +36,34 @@ export function drawGroups(
     );
   }
 
-  // Si no hay bombos, los inferimos por orden recibido (4 bombos del mismo tamaño).
-  const hasPots = countries.every(c => c.pot);
-  let pots: string[][];
-  if (hasPots) {
-    pots = [1, 2, 3, 4].map(p =>
-      shuffle(countries.filter(c => c.pot === p).map(c => c.countryId))
-    );
-  } else {
-    const shuffled = shuffle(countries.map(c => c.countryId));
-    const size = cfg.groups;
-    pots = [
-      shuffled.slice(0, size),
-      shuffled.slice(size, size * 2),
-      shuffled.slice(size * 2, size * 3),
-      shuffled.slice(size * 3, size * 4)
-    ];
-  }
+  const teamOf: Record<string, string | null> = {};
+  countries.forEach(c => { teamOf[c.countryId] = c.teamId ?? null; });
 
+  // Intentamos varias veces buscar un sorteo donde ningun grupo tenga 2 paises del mismo equipo.
+  const MAX_ATTEMPTS = 200;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const groups = tryDraw(countries, cfg);
+    const ok = groups.every(g => {
+      const teamsInGroup = g.countries.map(cid => teamOf[cid]).filter(Boolean);
+      return new Set(teamsInGroup).size === teamsInGroup.length;
+    });
+    if (ok) return groups;
+  }
+  // Si no se logra (muchos paises del mismo equipo), devolvemos el ultimo intento.
+  return tryDraw(countries, cfg);
+}
+
+function tryDraw(countries: DrawInputCountry[], cfg: typeof FORMAT_CONFIG[TournamentFormat]): DrawnGroup[] {
+  const shuffled = shuffle(countries.map(c => c.countryId));
+  const pots: string[][] = [];
+  for (let p = 0; p < cfg.perGroup; p++) {
+    pots.push(shuffled.slice(p * cfg.groups, (p + 1) * cfg.groups));
+  }
   const groups: DrawnGroup[] = Array.from({ length: cfg.groups }, (_, i) => ({
     letter: groupLetter(i),
     countries: []
   }));
-
-  for (let p = 0; p < 4; p++) {
+  for (let p = 0; p < cfg.perGroup; p++) {
     const pot = pots[p];
     for (let g = 0; g < cfg.groups; g++) {
       groups[g].countries.push(pot[g]);
@@ -78,15 +85,31 @@ export interface DraftMatch {
   feeds_loser_side?: "home" | "away";
 }
 
-/** Round-robin clasico de 4 equipos: 6 partidos, 3 jornadas. */
+/** Round-robin: soporta grupos de 3 o 4 equipos. */
 export function generateGroupMatches(group: DrawnGroup): DraftMatch[] {
-  const [a, b, c, d] = group.countries;
-  // Jornada 1: A-B, C-D | J2: A-C, B-D | J3: A-D, B-C
-  const fixtures: [string, string][][] = [
-    [[a, b], [c, d]],
-    [[a, c], [b, d]],
-    [[a, d], [b, c]]
-  ];
+  const cs = group.countries;
+  let fixtures: [string, string][][] = [];
+  if (cs.length === 4) {
+    const [a, b, c, d] = cs;
+    // J1: A-B, C-D | J2: A-C, B-D | J3: A-D, B-C
+    fixtures = [
+      [[a, b], [c, d]],
+      [[a, c], [b, d]],
+      [[a, d], [b, c]]
+    ];
+  } else if (cs.length === 3) {
+    const [a, b, c] = cs;
+    fixtures = [[[a, b]], [[a, c]], [[b, c]]];
+  } else {
+    // round-robin generico (1 partido por jornada)
+    const all: [string, string][] = [];
+    for (let i = 0; i < cs.length; i++) {
+      for (let j = i + 1; j < cs.length; j++) {
+        all.push([cs[i], cs[j]]);
+      }
+    }
+    fixtures = all.map(p => [p]);
+  }
   const matches: DraftMatch[] = [];
   fixtures.forEach((round, ri) => {
     round.forEach(([h, aw]) => {
