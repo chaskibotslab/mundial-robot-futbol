@@ -94,11 +94,16 @@ export default function TournamentManager({ tournament, countries, teams, entrie
     }
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     setBusy(true);
-    const updates = entriesWithoutCountry.map((e, i) => ({ id: e.id, country_id: shuffled[i].id }));
-    for (const u of updates) {
-      await supabase.from("tournament_entries").update({ country_id: u.country_id }).eq("id", u.id);
-    }
+    const updates = entriesWithoutCountry.map((e, i) => ({
+      id: e.id,
+      tournament_id: e.tournament_id,
+      team_id: e.team_id,
+      country_id: shuffled[i].id,
+    }));
+    // Un solo round-trip via upsert (evita N requests que tumban HTTP/2 en Railway)
+    const { error } = await supabase.from("tournament_entries").upsert(updates);
     setBusy(false);
+    if (error) return alert(error.message);
     setEntries(e => e.map(x => {
       const u = updates.find(u => u.id === x.id);
       return u ? { ...x, country_id: u.country_id } : x;
