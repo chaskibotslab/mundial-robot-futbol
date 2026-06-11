@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import GroupTable from "@/components/GroupTable";
 import BracketView from "@/components/BracketView";
 import BracketTV from "@/components/BracketTV";
-import type { Country, Match, Standing, TournamentFormat } from "@/lib/types";
+import type { Country, Match, Standing, Team, TournamentEntry, TournamentFormat } from "@/lib/types";
 
 interface Props {
   tournamentId: string;
@@ -18,20 +18,31 @@ export default function TournamentLive({ tournamentId, name, status, format }: P
   const [standings, setStandings] = useState<Standing[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [countries, setCountries] = useState<Record<string, Country>>({});
+  const [teamByCountry, setTeamByCountry] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"groups" | "bracket">(status === "knockout" || status === "finished" ? "bracket" : "groups");
   const [bracketMode, setBracketMode] = useState<"tv" | "list">("tv");
 
   const refresh = useCallback(async () => {
-    const [{ data: st }, { data: ms }, { data: cs }] = await Promise.all([
+    const [{ data: st }, { data: ms }, { data: cs }, { data: entries }, { data: teams }] = await Promise.all([
       supabase.from("v_group_standings").select("*").eq("tournament_id", tournamentId),
       supabase.from("matches").select("*").eq("tournament_id", tournamentId).order("round_index"),
-      supabase.from("countries").select("*")
+      supabase.from("countries").select("*"),
+      supabase.from("tournament_entries").select("*").eq("tournament_id", tournamentId),
+      supabase.from("teams").select("*"),
     ]);
     setStandings((st as Standing[]) ?? []);
     setMatches((ms as Match[]) ?? []);
     const map: Record<string, Country> = {};
     ((cs as Country[]) ?? []).forEach(c => { map[c.id] = c; });
     setCountries(map);
+    // country_id -> team_name (solo entries de ESTE torneo)
+    const teamMap: Record<string, Team> = {};
+    ((teams as Team[]) ?? []).forEach(t => { teamMap[t.id] = t; });
+    const tbc: Record<string, string> = {};
+    ((entries as TournamentEntry[]) ?? []).forEach(e => {
+      if (e.country_id && e.team_id && teamMap[e.team_id]) tbc[e.country_id] = teamMap[e.team_id].name;
+    });
+    setTeamByCountry(tbc);
   }, [supabase, tournamentId]);
 
   useEffect(() => {
@@ -68,7 +79,7 @@ export default function TournamentLive({ tournamentId, name, status, format }: P
       </div>
 
       {tab === "groups" ? (
-        <GroupTable standings={standings} matches={matches.filter(m => m.stage === "group")} />
+        <GroupTable standings={standings} matches={matches.filter(m => m.stage === "group")} teamByCountry={teamByCountry} />
       ) : (
         <div className="space-y-3">
           <div className="flex justify-end gap-2 text-xs">
@@ -76,8 +87,8 @@ export default function TournamentLive({ tournamentId, name, status, format }: P
             <button onClick={() => setBracketMode("list")} className={bracketMode === "list" ? "btn-primary text-xs px-3 py-1" : "btn-ghost text-xs px-3 py-1"}>Vista Lista</button>
           </div>
           {bracketMode === "tv"
-            ? <BracketTV matches={matches.filter(m => m.stage !== "group")} countries={countries} />
-            : <BracketView matches={matches.filter(m => m.stage !== "group")} countries={countries} />}
+            ? <BracketTV matches={matches.filter(m => m.stage !== "group")} countries={countries} teamByCountry={teamByCountry} />
+            : <BracketView matches={matches.filter(m => m.stage !== "group")} countries={countries} teamByCountry={teamByCountry} />}
         </div>
       )}
     </div>

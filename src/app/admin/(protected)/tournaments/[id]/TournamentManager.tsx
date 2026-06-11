@@ -501,7 +501,7 @@ export default function TournamentManager({ tournament, countries, teams, entrie
         <div className="card p-4">
           <h2 className="font-bold mb-3">🏆 Cuadro de eliminatorias</h2>
           <div className="overflow-x-auto">
-            <BracketTV matches={matches} countries={countryById} />
+            <BracketTV matches={matches} countries={countryById} teamByCountry={Object.fromEntries(entries.filter(e => e.country_id && e.team_id && teamById[e.team_id]).map(e => [e.country_id!, teamById[e.team_id].name]))} />
           </div>
         </div>
       )}

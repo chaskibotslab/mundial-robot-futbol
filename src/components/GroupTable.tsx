@@ -4,9 +4,10 @@ import type { Match, Standing } from "@/lib/types";
 interface Props {
   standings: Standing[];
   matches: Match[];
+  teamByCountry?: Record<string, string>;
 }
 
-export default function GroupTable({ standings, matches }: Props) {
+export default function GroupTable({ standings, matches, teamByCountry = {} }: Props) {
   const groups = Array.from(new Set(standings.map(s => s.group_letter))).sort();
   const sortFn = (a: Standing, b: Standing) =>
     b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.country_name.localeCompare(b.country_name);
@@ -36,9 +37,16 @@ export default function GroupTable({ standings, matches }: Props) {
                 {rows.map((r, i) => (
                   <tr key={r.country_id} className="border-t border-slate-800">
                     <td className="py-1.5 text-slate-500">{i + 1}</td>
-                    <td className="flex items-center gap-2 py-1.5">
-                      {r.flag_url && <img src={r.flag_url} alt="" className="w-5 h-3 object-cover rounded-sm" />}
-                      {r.country_name}
+                    <td className="py-1.5">
+                      <div className="flex items-center gap-2">
+                        {r.flag_url && <img src={r.flag_url} alt="" className="w-5 h-3 object-cover rounded-sm" />}
+                        <div className="leading-tight">
+                          <div>{r.country_name}</div>
+                          {teamByCountry[r.country_id] && (
+                            <div className="text-[10px] text-slate-400">🤖 {teamByCountry[r.country_id]}</div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="text-center">{r.pj}</td>
                     <td className="text-center">{r.pg}</td>

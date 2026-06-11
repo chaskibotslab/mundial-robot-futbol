@@ -7,6 +7,7 @@ const STAGE_ORDER_LEFT: MatchStage[] = ["r32", "r16", "qf", "sf"];
 interface Props {
   matches: Match[];
   countries: Record<string, Country>;
+  teamByCountry?: Record<string, string>;
 }
 
 /**
@@ -15,7 +16,7 @@ interface Props {
  * - Centro: Final + Tercer Puesto + trofeo
  * - Lado derecho: simetrico (interiores -> exteriores)
  */
-export default function BracketTV({ matches, countries }: Props) {
+export default function BracketTV({ matches, countries, teamByCountry = {} }: Props) {
   const stagesPresent = STAGE_ORDER_LEFT.filter(s => matches.some(m => m.stage === s));
   const final = matches.find(m => m.stage === "final");
   const third = matches.find(m => m.stage === "third");
@@ -39,18 +40,18 @@ export default function BracketTV({ matches, countries }: Props) {
         <div className="grid" style={{ gridTemplateColumns: `repeat(${stagesPresent.length}, minmax(150px, 1fr))` }}>
           {stagesPresent.map(stage => {
             const { left } = splitStage(stage);
-            return <StageColumn key={`L-${stage}`} stage={stage} matches={left} countries={countries} side="left" />;
+            return <StageColumn key={`L-${stage}`} stage={stage} matches={left} countries={countries} teamByCountry={teamByCountry} side="left" />;
           })}
         </div>
 
         {/* Centro: Final + Trofeo + Tercer puesto */}
-        <CenterBlock final={final} third={third} countries={countries} />
+        <CenterBlock final={final} third={third} countries={countries} teamByCountry={teamByCountry} />
 
         {/* Lado derecho: stages innermost -> outermost */}
         <div className="grid" style={{ gridTemplateColumns: `repeat(${stagesPresent.length}, minmax(150px, 1fr))` }}>
           {[...stagesPresent].reverse().map(stage => {
             const { right } = splitStage(stage);
-            return <StageColumn key={`R-${stage}`} stage={stage} matches={right} countries={countries} side="right" />;
+            return <StageColumn key={`R-${stage}`} stage={stage} matches={right} countries={countries} teamByCountry={teamByCountry} side="right" />;
           })}
         </div>
       </div>
@@ -59,8 +60,8 @@ export default function BracketTV({ matches, countries }: Props) {
 }
 
 function StageColumn({
-  stage, matches, countries, side
-}: { stage: MatchStage; matches: Match[]; countries: Record<string, Country>; side: "left" | "right" }) {
+  stage, matches, countries, teamByCountry, side
+}: { stage: MatchStage; matches: Match[]; countries: Record<string, Country>; teamByCountry: Record<string, string>; side: "left" | "right" }) {
   const label: Record<MatchStage, string> = {
     group: "Grupos", r32: "32avos", r16: "Octavos", qf: "Cuartos", sf: "Semis", third: "3ro", final: "Final"
   };
@@ -69,25 +70,25 @@ function StageColumn({
       <div className={`text-xs uppercase tracking-wider text-brand font-semibold mb-1 ${side === "right" ? "text-right" : ""}`}>
         {label[stage]}
       </div>
-      {matches.map(m => <BracketCard key={m.id} match={m} countries={countries} side={side} />)}
+      {matches.map(m => <BracketCard key={m.id} match={m} countries={countries} teamByCountry={teamByCountry} side={side} />)}
     </div>
   );
 }
 
 function CenterBlock({
-  final, third, countries
-}: { final?: Match; third?: Match; countries: Record<string, Country> }) {
+  final, third, countries, teamByCountry
+}: { final?: Match; third?: Match; countries: Record<string, Country>; teamByCountry: Record<string, string> }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-2 min-w-[200px]">
       <div className="text-xs uppercase tracking-wider text-amber-400 font-bold">Final</div>
       {final
-        ? <BracketCard match={final} countries={countries} side="center" highlight />
+        ? <BracketCard match={final} countries={countries} teamByCountry={teamByCountry} side="center" highlight />
         : <PlaceholderCard />}
       <Trophy className="text-amber-400" size={56} />
       {third && (
         <>
           <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mt-2">Tercer Puesto</div>
-          <BracketCard match={third} countries={countries} side="center" />
+          <BracketCard match={third} countries={countries} teamByCountry={teamByCountry} side="center" />
         </>
       )}
     </div>
@@ -95,8 +96,8 @@ function CenterBlock({
 }
 
 function BracketCard({
-  match, countries, side, highlight
-}: { match: Match; countries: Record<string, Country>; side: "left" | "right" | "center"; highlight?: boolean }) {
+  match, countries, teamByCountry, side, highlight
+}: { match: Match; countries: Record<string, Country>; teamByCountry: Record<string, string>; side: "left" | "right" | "center"; highlight?: boolean }) {
   const home = match.home_country ? countries[match.home_country] : null;
   const away = match.away_country ? countries[match.away_country] : null;
   const isLive = match.status === "live";
@@ -108,24 +109,27 @@ function BracketCard({
     <div className={`rounded-lg border bg-slate-900/80 backdrop-blur p-2 text-xs shadow
       ${isLive ? "border-red-500 animate-pulse" : "border-slate-700"}
       ${highlight ? "border-amber-400 shadow-amber-500/20 shadow-lg p-3 text-sm" : ""}`}>
-      <Row country={home} score={match.home_score} winner={homeWin} done={isDone} reverse={side === "right"} />
-      <Row country={away} score={match.away_score} winner={awayWin} done={isDone} reverse={side === "right"} />
+      <Row country={home} team={home ? teamByCountry[home.id] : undefined} score={match.home_score} winner={homeWin} done={isDone} reverse={side === "right"} />
+      <Row country={away} team={away ? teamByCountry[away.id] : undefined} score={match.away_score} winner={awayWin} done={isDone} reverse={side === "right"} />
       {isLive && <div className="text-[10px] text-red-400 text-center mt-1">EN VIVO</div>}
     </div>
   );
 }
 
 function Row({
-  country, score, winner, done, reverse
-}: { country: Country | null; score: number; winner: boolean; done: boolean; reverse?: boolean }) {
+  country, team, score, winner, done, reverse
+}: { country: Country | null; team?: string; score: number; winner: boolean; done: boolean; reverse?: boolean }) {
   return (
     <div className={`flex items-center gap-2 ${reverse ? "flex-row-reverse" : ""}`}>
       {country?.flag_url
         ? <img src={country.flag_url} alt="" className="w-5 h-3 object-cover rounded-sm shrink-0" />
         : <div className="w-5 h-3 bg-slate-700 rounded-sm shrink-0" />}
-      <span className={`flex-1 truncate ${winner ? "font-bold text-brand" : done ? "text-slate-400" : ""} ${reverse ? "text-right" : ""}`}>
-        {country?.name ?? "TBD"}
-      </span>
+      <div className={`flex-1 min-w-0 ${reverse ? "text-right" : ""}`}>
+        <div className={`truncate ${winner ? "font-bold text-brand" : done ? "text-slate-400" : ""}`}>
+          {country?.name ?? "TBD"}
+        </div>
+        {team && <div className="text-[9px] text-slate-500 truncate">🤖 {team}</div>}
+      </div>
       <span className={`tabular-nums w-5 text-center ${winner ? "font-bold" : "text-slate-500"}`}>
         {done || country ? score : ""}
       </span>
