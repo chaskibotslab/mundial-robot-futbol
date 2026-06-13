@@ -130,6 +130,17 @@ function MatchRow({
   const [busy, setBusy] = useState(false);
   const [showGoals, setShowGoals] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
+  const [dirty, setDirty] = useState(false);
+
+  // Re-sincronizar desde props cuando llegue un cambio remoto via realtime,
+  // SOLO si el usuario no esta editando localmente (dirty=false).
+  useEffect(() => {
+    if (!dirty) {
+      setHome(match.home_score);
+      setAway(match.away_score);
+      setStatus(match.status);
+    }
+  }, [match.home_score, match.away_score, match.status, dirty]);
 
   const homeCountry = match.home_country ? countryById[match.home_country] : null;
   const awayCountry = match.away_country ? countryById[match.away_country] : null;
@@ -161,6 +172,7 @@ function MatchRow({
     setBusy(false);
     if (error) return alert(error.message);
     if (forceStatus) setStatus(forceStatus);
+    setDirty(false); // ya guardado: dejar que realtime re-sincronice
     onSaved();
   }
 
@@ -181,6 +193,7 @@ function MatchRow({
       status: "live"
     }).eq("id", match.id);
     setStatus("live");
+    setDirty(false); // ya guardado: dejar que realtime re-sincronice
     form.reset();
     loadGoals();
     onSaved();
@@ -200,10 +213,10 @@ function MatchRow({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-2">
         <Side country={homeCountry} team={homeTeam} />
         <div className="flex items-center gap-1">
-          <input type="number" min={0} value={home} onChange={e => setHome(parseInt(e.target.value) || 0)}
+          <input type="number" min={0} value={home} onChange={e => { setHome(parseInt(e.target.value) || 0); setDirty(true); }}
             className="w-12 bg-slate-950 border border-slate-700 rounded p-1 text-center font-bold text-lg" disabled={!playable} />
           <span className="text-slate-500">-</span>
-          <input type="number" min={0} value={away} onChange={e => setAway(parseInt(e.target.value) || 0)}
+          <input type="number" min={0} value={away} onChange={e => { setAway(parseInt(e.target.value) || 0); setDirty(true); }}
             className="w-12 bg-slate-950 border border-slate-700 rounded p-1 text-center font-bold text-lg" disabled={!playable} />
         </div>
         <Side country={awayCountry} team={awayTeam} reverse />
@@ -211,7 +224,7 @@ function MatchRow({
 
       {/* Controles abajo */}
       <div className="flex items-center gap-2 flex-wrap text-sm">
-        <select value={status} onChange={e => setStatus(e.target.value as MatchStatus)} className="bg-slate-950 border border-slate-700 rounded p-1">
+        <select value={status} onChange={e => { setStatus(e.target.value as MatchStatus); setDirty(true); }} className="bg-slate-950 border border-slate-700 rounded p-1">
           <option value="scheduled">Programado</option>
           <option value="live">En vivo</option>
           <option value="finished">Finalizado</option>
